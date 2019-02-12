@@ -1,5 +1,5 @@
 const glob = require('glob-to-regexp');
-const URL = require('whatwg-url');
+const Url = require('url-parse');
 const pathToRegexp = require('path-to-regexp');
 const querystring = require('querystring');
 const {
@@ -41,14 +41,7 @@ const getMethodMatcher = ({ method: expectedMethod }) => {
 };
 
 const parseQuery = url => {
-	let parsedUrl = URL.parseURL(url);
-	if (!parsedUrl) {
-		// relative urls are not parsed according to whatwg specs
-		// (https://github.com/whatwg/url/issues/136)
-		parsedUrl = URL.parseURL(url, { baseURL: 'http://wheresrhys.co.uk' });
-	}
-
-	return querystring.parse(parsedUrl.query);
+	return new Url(url, null, true).query;
 };
 
 const getQueryStringMatcher = route => {

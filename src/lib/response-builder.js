@@ -129,37 +129,42 @@ e.g. {"body": {"status: "registered"}}`);
 	}
 
 	buildObservableResponse(response) {
-		const fetchMock = this.fetchMock;
+		// const fetchMock = this.fetchMock;
 
 		// Using a proxy means we can set properties that may not be writable on
 		// the original Response. It also means we can track the resolution of
 		// promises returned by res.json(), res.text() etc
-		return new Proxy(response, {
-			get: (originalResponse, name) => {
-				if (this.shorthandResponse.redirectUrl) {
-					if (name === 'url') {
-						return this.shorthandResponse.redirectUrl;
-					}
 
-					if (name === 'redirected') {
-						return true;
-					}
-				}
+		return response;
 
-				if (typeof originalResponse[name] === 'function') {
-					return new Proxy(originalResponse[name], {
-						apply: (func, thisArg, args) => {
-							const result = func.apply(response, args);
-							if (result.then) {
-								fetchMock._holdingPromises.push(result.catch(() => null));
-							}
-							return result;
-						}
-					});
-				}
+		// disabled to be because Proxy is not compatible with IE11
 
-				return originalResponse[name];
-			}
-		});
+		// return new Proxy(response, {
+		// 	get: (originalResponse, name) => {
+		// 		if (this.shorthandResponse.redirectUrl) {
+		// 			if (name === 'url') {
+		// 				return this.shorthandResponse.redirectUrl;
+		// 			}
+		//
+		// 			if (name === 'redirected') {
+		// 				return true;
+		// 			}
+		// 		}
+		//
+		// 		if (typeof originalResponse[name] === 'function') {
+		// 			return new Proxy(originalResponse[name], {
+		// 				apply: (func, thisArg, args) => {
+		// 					const result = func.apply(response, args);
+		// 					if (result.then) {
+		// 						fetchMock._holdingPromises.push(result.catch(() => null));
+		// 					}
+		// 					return result;
+		// 				}
+		// 			});
+		// 		}
+		//
+		// 		return originalResponse[name];
+		// 	}
+		// });
 	}
 };

@@ -1,4 +1,5 @@
-const URL = require('whatwg-url');
+const Url = require('url-parse');
+const path = require('path');
 // https://stackoverflow.com/a/19709846/308237
 const absoluteUrlRX = new RegExp('^(?:[a-z]+:)?//', 'i');
 
@@ -17,26 +18,49 @@ const zip = entries =>
 	entries.reduce((obj, [key, val]) => Object.assign(obj, { [key]: val }), {});
 
 module.exports = {
-	normalizeUrl: url => {
+	normalizeUrl: inUrl => {
 		if (
-			typeof url === 'function' ||
-			url instanceof RegExp ||
-			/^(begin|end|glob|express|path)\:/.test(url)
+			typeof inUrl === 'function' ||
+			inUrl instanceof RegExp ||
+			/^(begin|end|glob|express|path)\:/.test(inUrl)
 		) {
-			return url;
+			return inUrl;
 		}
+
+		const url = inUrl.toString();
+
+		let res;
+
 		if (absoluteUrlRX.test(url)) {
-			const u = new URL.URL(url);
-			return u.href;
+			const u = new Url(url);
+
+			if (url.indexOf('..') > -1) {
+				res = `${u.protocol}//${u.host}${path.join(u.pathname)}`;
+			} else {
+				if (!u.query && (u.pathname === '/' || !u.pathname)) {
+					res = `${u.origin}/`;
+				} else {
+					res = `${u.protocol}//${u.host}${path.join('/', u.pathname)}${
+						u.query
+					}`;
+				}
+			}
 		} else {
-			const u = new URL.URL(url, 'http://dummy');
-			return u.pathname + u.search;
+			const u = new Url(url);
+
+			if (url.indexOf('..') > -1 || url.indexOf('./') > -1) {
+				res = `${u.host}${path.join('/', u.pathname)}${u.query}`;
+			} else {
+				res = u.pathname + u.query;
+			}
 		}
+
+		return res;
 	},
 	getPath: url => {
 		const u = absoluteUrlRX.test(url)
-			? new URL.URL(url)
-			: new URL.URL(url, 'http://dummy');
+			? new Url(url)
+			: new Url(url, 'http://dummy');
 		return u.pathname;
 	},
 	headers: {
