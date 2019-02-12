@@ -1,6 +1,6 @@
 {
   "name": "fetch-mock-one.com",
-  "version": "7.0.7-patch.1",
+  "version": "8.0.0",
   "description": "Mock http requests made using fetch (or isomorphic-fetch) (FORK)",
   "main": "src/server.js",
   "browser": "es5/client.js",
