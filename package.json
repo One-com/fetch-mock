@@ -29,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sepo-one/fetch-mock"
+    "url": "https://github.com/One-com/fetch-mock"
   },
   "keywords": [
     "fetch",
@@ -43,7 +43,7 @@
   "author": "Rhys Evans",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sepo-one/fetch-mock/issues"
+    "url": "https://github.com/One-com/fetch-mock/issues"
   },
   "homepage": "http://www.wheresrhys.co.uk/fetch-mock",
   "dependencies": {
