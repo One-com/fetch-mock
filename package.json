@@ -1,7 +1,7 @@
 {
-  "name": "fetch-mock",
-  "version": "0.0.0",
-  "description": "Mock http requests made using fetch (or isomorphic-fetch)",
+  "name": "fetch-mock-one.com",
+  "version": "7.3.1-fork",
+  "description": "Mock http requests made using fetch (or isomorphic-fetch) (FORK)",
   "main": "src/server.js",
   "browser": "es5/client.js",
   "scripts": {
@@ -29,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/wheresrhys/fetch-mock.git"
+    "url": "https://github.com/One-com/fetch-mock"
   },
   "keywords": [
     "fetch",
@@ -40,10 +40,10 @@
     "xhr",
     "ajax"
   ],
-  "author": "Rhys Evans",
+  "author": "Sergey Poskachey",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/wheresrhys/fetch-mock/issues"
+    "url": "https://github.com/One-com/fetch-mock/issues"
   },
   "homepage": "http://www.wheresrhys.co.uk/fetch-mock",
   "dependencies": {
