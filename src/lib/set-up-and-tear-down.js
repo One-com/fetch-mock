@@ -1,9 +1,53 @@
 const compileRoute = require('./compile-route');
 const FetchMock = {};
 
-const getPropertyComparer = (route, propName) => route2 =>
-	(!route[propName] && !route2[propName]) ||
-	route[propName] === route2[propName];
+const makeRouteComparator = (
+	route,
+	propName,
+	comparator = null
+) => candidateRoute => {
+	if (route[propName] && candidateRoute[propName]) {
+		return comparator && typeof comparator === 'function'
+			? comparator(route[propName], candidateRoute[propName])
+			: route[propName] === candidateRoute[propName];
+	}
+
+	return !route[propName] && !candidateRoute[propName];
+};
+
+const RouteMatcherSpec = {
+	identifier: true,
+	method: true,
+	query: (routeQuery, candidateRouteQuery) => {
+		const routeKeys = Object.keys(routeQuery);
+		const candidateRouteKeys = Object.keys(candidateRouteQuery);
+
+		if (routeKeys.length !== candidateRouteKeys.length) {
+			return false;
+		}
+
+		if (routeKeys.some(k => candidateRouteKeys.indexOf(k) === -1)) {
+			return false;
+		}
+
+		for (let i = 0; i < routeKeys.length; i++) {
+			if (routeQuery[routeKeys[i]] !== candidateRouteQuery[routeKeys[i]]) {
+				return false;
+			}
+		}
+
+		return true;
+	},
+	repeat: true
+};
+
+const makeRoutMatcher = route => candidateRoute =>
+	Object.keys(RouteMatcherSpec).reduce((acc, prop) => {
+		if (!acc) return false;
+
+		const compare = makeRouteComparator(route, prop, RouteMatcherSpec[prop]);
+		return compare(candidateRoute);
+	}, true);
 
 FetchMock.mock = function(matcher, response, options = {}) {
 	let route;
@@ -29,39 +73,36 @@ FetchMock.mock = function(matcher, response, options = {}) {
 };
 
 FetchMock.addRoute = function(uncompiledRoute) {
-	const route = this.compileRoute(uncompiledRoute);
-	const clashes = this.routes.filter(getPropertyComparer(route, 'identifier'));
+	const addRoute = () => {
+		this._uncompiledRoutes.push(uncompiledRoute);
+		return this.routes.push(route);
+	};
 
+	const route = this.compileRoute(uncompiledRoute);
 	const overwriteRoutes =
 		'overwriteRoutes' in route
 			? route.overwriteRoutes
 			: this.config.overwriteRoutes;
+	const matcher = makeRoutMatcher(route);
+	const dupIndex = this.routes.findIndex(matcher);
 
-	if (overwriteRoutes === false || !clashes.length) {
-		this._uncompiledRoutes.push(uncompiledRoute);
-		return this.routes.push(route);
-	}
-
-	const methodsMatch = getPropertyComparer(route, 'method');
-
-	if (overwriteRoutes === true) {
-		const index = this.routes.indexOf(clashes.find(methodsMatch));
-		if (index > -1) {
-			this._uncompiledRoutes.splice(index, 1, uncompiledRoute);
-			return this.routes.splice(index, 1, route);
+	if (!overwriteRoutes) {
+		if (dupIndex > -1) {
+			throw new Error(
+				// eslint-disable-next-line prettier/prettier
+				`fetch-mock: Adding route ${route.identifier} with same name or matcher as existing route.
+				See \`overwriteRoutes\` option.`
+			);
 		}
+		return addRoute();
 	}
 
-	if (
-		clashes.some(existingRoute => !route.method || methodsMatch(existingRoute))
-	) {
-		throw new Error(
-			'fetch-mock: Adding route with same name or matcher as existing route. See `overwriteRoutes` option.'
-		);
+	if (dupIndex > -1) {
+		this._uncompiledRoutes.splice(dupIndex, 1, uncompiledRoute);
+		return this.routes.splice(dupIndex, 1, route);
 	}
 
-	this._uncompiledRoutes.push(uncompiledRoute);
-	this.routes.push(route);
+	addRoute();
 };
 
 FetchMock._mock = function() {
