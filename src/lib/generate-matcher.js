@@ -41,10 +41,16 @@ const getMethodMatcher = ({ method: expectedMethod }) => {
 };
 
 const getQueryStringMatcher = ({ query: expectedQuery }) => {
-	const keys = Object.keys(expectedQuery);
+	const expectedQueryKeys = Object.keys(expectedQuery);
 	return url => {
 		const query = querystring.parse(getQuery(url));
-		return keys.every(key => query[key] === expectedQuery[key]);
+		const queryKeys = Object.keys(query);
+
+		if (expectedQueryKeys.length === queryKeys.length) {
+			return expectedQueryKeys.every(key => query[key] === expectedQuery[key]);
+		}
+
+		return false;
 	};
 };
 
