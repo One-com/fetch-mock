@@ -142,7 +142,8 @@ module.exports = fetchMock => {
 				});
 			}
 
-			it('respond with a redirected response', async () => {
+			// disabled to be because Proxy is not compatible with IE11
+			xit('respond with a redirected response', async () => {
 				fm.mock('http://it.at.there/', {
 					redirectUrl: 'http://it.at.there/destination',
 					body: 'I am a redirect'

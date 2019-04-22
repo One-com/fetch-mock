@@ -1,4 +1,5 @@
-const URL = require('whatwg-url');
+const Url = require('url-parse');
+const path = require('path');
 // https://stackoverflow.com/a/19709846/308237
 const absoluteUrlRX = new RegExp('^(?:[a-z]+:)?//', 'i');
 
@@ -16,21 +17,38 @@ const headersToArray = headers => {
 const zipObject = entries =>
 	entries.reduce((obj, [key, val]) => Object.assign(obj, { [key]: val }), {});
 
-const normalizeUrl = url => {
+const normalizeUrl = inUrl => {
 	if (
-		typeof url === 'function' ||
-		url instanceof RegExp ||
-		/^(begin|end|glob|express|path)\:/.test(url)
+		typeof inUrl === 'function' ||
+		inUrl instanceof RegExp ||
+		/^(begin|end|glob|express|path)\:/.test(inUrl)
 	) {
-		return url;
+		return inUrl;
 	}
+
+	const url = inUrl.toString();
+
+	let res;
+
+	const u = new Url(url);
+
 	if (absoluteUrlRX.test(url)) {
-		const u = new URL.URL(url);
-		return u.href;
+		if (url.indexOf('..') > -1) {
+			res = `${u.protocol}//${u.host}${path.join(u.pathname)}`;
+		} else if (!u.query && (u.pathname === '/' || !u.pathname)) {
+			res = `${u.origin}/`;
+		} else {
+			res = `${u.protocol}//${u.host}${path.join('/', u.pathname)}${u.query}`;
+		}
 	} else {
-		const u = new URL.URL(url, 'http://dummy');
-		return u.pathname + u.search;
+		if (url.indexOf('..') > -1 || url.indexOf('./') > -1) {
+			res = `${u.host}${path.join('/', u.pathname)}${u.query}`;
+		} else {
+			res = u.pathname + u.query;
+		}
 	}
+
+	return res;
 };
 
 module.exports = {
@@ -70,16 +88,18 @@ module.exports = {
 	normalizeUrl,
 	getPath: url => {
 		const u = absoluteUrlRX.test(url)
-			? new URL.URL(url)
-			: new URL.URL(url, 'http://dummy');
+			? new Url(url)
+			: new Url(url, 'http://dummy');
+
 		return u.pathname;
 	},
 
 	getQuery: url => {
 		const u = absoluteUrlRX.test(url)
-			? new URL.URL(url)
-			: new URL.URL(url, 'http://dummy');
-		return u.search ? u.search.substr(1) : '';
+			? new Url(url)
+			: new Url(url, 'http://dummy');
+
+		return u.query ? u.query.substr(1) : '';
 	},
 	headers: {
 		normalize: headers => zipObject(headersToArray(headers)),
